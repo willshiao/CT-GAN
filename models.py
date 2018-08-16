@@ -36,7 +36,7 @@ class Generator(nn.Module):
         # Map latent into appropriate size for transposed convolutions
         x = self.latent_to_features(input_data)
         # Reshape
-        x = x.view(-1, 8 * self.dim, self.feature_sizes[0], self.feature_sizes[1])
+        x = x.view(-1, 8 * self.dim, int(self.feature_sizes[0]), int(self.feature_sizes[1]))
         # Return generated image
         return self.features_to_image(x)
 
