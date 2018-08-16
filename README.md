@@ -41,3 +41,4 @@ Note that CT-GANs take a *long* time to converge.
 * https://github.com/kuc2477/pytorch-wgan-gp
 * https://github.com/EmilienDupont/wgan-gp
 
+Any improvements to the code are welcome!
