@@ -1,33 +1,6 @@
-# Wasserstein GAN with Gradient penalty
+# WGAN with gradient penalty and consistency term
 
-Pytorch implementation of [Improved Training of Wasserstein GANs](https://arxiv.org/abs/1704.00028) by Gulrajani et al.
-
-## Examples
-
-### MNIST
-
-Parameters used were `lr=1e-4`, `betas=(.9, .99)`, `dim=16`, `latent_dim=100`. Note that the images were resized from (28, 28) to (32, 32).
-
-#### Training (200 epochs)
-![mnist_gif](https://github.com/EmilienDupont/wgan-gp/raw/master/gifs/mnist_200_epochs.gif)
-
-#### Samples
-![mnist_samples](https://github.com/EmilienDupont/wgan-gp/raw/master/imgs/mnist_samples.png)
-
-
-### Fashion MNIST
-
-#### Training (200 epochs)
-![fashion_mnist_gif](https://github.com/EmilienDupont/wgan-gp/raw/master/gifs/training_200_epochs_fashion_mnist.gif)
-
-#### Samples
-![fashion_mnist_samples](https://github.com/EmilienDupont/wgan-gp/raw/master/imgs/fashion_mnist_samples.png)
-
-### LSUN Bedrooms
-
-Gif [work in progress]
-
-Samples [work in progress]
+Pytorch implementation of [Improving the Improved Training of Wasserstein GANs](https://arxiv.org/abs/1803.01541) by Xiang Wei, Boqing Gong, Zixia Liu, Wei Lu and Liqiang Wang
 
 ## Usage
 
@@ -41,7 +14,7 @@ discriminator = Discriminator(img_size=(32, 32, 1), dim=16)
 
 The generator and discriminator are built to automatically scale with image sizes, so you can easily use images from your own dataset.
 
-Train the generator and discriminator with the WGAN-GP loss
+Train the generator and discriminator with the CT-GAN loss
 
 ```python
 import torch
@@ -60,9 +33,11 @@ trainer.train(data_loader, epochs=200, save_training_gif=True)
 
 This will train the models and generate a gif of the training progress.
 
-Note that WGAN-GPs take a *long* time to converge. Even on MNIST it takes about 50 epochs to start seeing decent results. For more information and a full example on MNIST, check out `main.py`.
+Note that CT-GANs take a *long* time to converge.
 
 ## Sources and inspiration
 
 * https://github.com/caogang/wgan-gp
 * https://github.com/kuc2477/pytorch-wgan-gp
+* https://github.com/EmilienDupont/wgan-gp
+
