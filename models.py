@@ -70,13 +70,10 @@ class Discriminator(nn.Module):
         # 4 convolutions of stride 2, i.e. halving of size everytime
         # So output size will be 8 * (img_size / 2 ^ 4) * (img_size / 2 ^ 4)
         output_size = 8 * dim * (img_size[0] / 16) * (img_size[1] / 16)
-        self.features_to_prob = nn.Sequential(
-            nn.Linear(output_size, 1),
-            nn.Sigmoid()
-        )
+        self.features_to_prob = nn.Linear(output_size, 1)
 
     def forward(self, input_data):
         batch_size = input_data.size()[0]
         x = self.image_to_features(input_data)
         x = x.view(batch_size, -1)
-        return self.features_to_prob(x)
+        return self.features_to_prob(x), x
