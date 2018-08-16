@@ -14,7 +14,7 @@ class Generator(nn.Module):
         self.feature_sizes = (self.img_size[0] / 16, self.img_size[1] / 16)
 
         self.latent_to_features = nn.Sequential(
-            nn.Linear(latent_dim, 8 * dim * self.feature_sizes[0] * self.feature_sizes[1]),
+            nn.Linear(latent_dim, int(8 * dim * self.feature_sizes[0] * self.feature_sizes[1])),
             nn.ReLU()
         )
 
@@ -70,7 +70,7 @@ class Discriminator(nn.Module):
         # 4 convolutions of stride 2, i.e. halving of size everytime
         # So output size will be 8 * (img_size / 2 ^ 4) * (img_size / 2 ^ 4)
         output_size = 8 * dim * (img_size[0] / 16) * (img_size[1] / 16)
-        self.features_to_prob = nn.Linear(output_size, 1)
+        self.features_to_prob = nn.Linear(int(output_size), 1)
 
     def forward(self, input_data):
         batch_size = input_data.size()[0]
