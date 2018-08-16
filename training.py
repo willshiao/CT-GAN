@@ -1,4 +1,3 @@
-import imageio
 import numpy as np
 import torch
 import torch.nn as nn
@@ -9,16 +8,18 @@ from torch.autograd import grad as torch_grad
 
 class Trainer():
     def __init__(self, generator, discriminator, gen_optimizer, dis_optimizer,
-                 gp_weight=10, critic_iterations=5, print_every=50,
+                 gp_weight=10.0, ct_weight=2.0, M=0.1, critic_iterations=5, print_every=50,
                  use_cuda=False):
         self.G = generator
         self.G_opt = gen_optimizer
         self.D = discriminator
         self.D_opt = dis_optimizer
-        self.losses = {'G': [], 'D': [], 'GP': [], 'gradient_norm': []}
+        self.losses = {'G': [], 'D': [], 'GP': [], 'CT': [], 'gradient_norm': []}
         self.num_steps = 0
         self.use_cuda = use_cuda
         self.gp_weight = gp_weight
+        self.ct_weight = ct_weight
+        self.M = M
         self.critic_iterations = critic_iterations
         self.print_every = print_every
 
@@ -36,16 +37,20 @@ class Trainer():
         data = Variable(data)
         if self.use_cuda:
             data = data.cuda()
-        d_real = self.D(data)
-        d_generated = self.D(generated_data)
+        d_real = self.D(data)[0]
+        d_generated = self.D(generated_data)[0]
 
         # Get gradient penalty
         gradient_penalty = self._gradient_penalty(data, generated_data)
         self.losses['GP'].append(gradient_penalty.data[0])
 
+        # Get consistency term
+        consistency_term = self._consistency_term(data)
+        self.losses['CT'].append(consistency_term.data[0])
+
         # Create total loss and optimize
         self.D_opt.zero_grad()
-        d_loss = d_generated.mean() - d_real.mean() + gradient_penalty
+        d_loss = d_generated.mean() - d_real.mean() + gradient_penalty + consistency_term
         d_loss.backward()
 
         self.D_opt.step()
@@ -62,13 +67,22 @@ class Trainer():
         generated_data = self.sample_generator(batch_size)
 
         # Calculate loss and optimize
-        d_generated = self.D(generated_data)
+        d_generated = self.D(generated_data)[0]
         g_loss = - d_generated.mean()
         g_loss.backward()
         self.G_opt.step()
 
         # Record loss
         self.losses['G'].append(g_loss.data[0])
+        
+    def _consistency_term(self, real_data):
+        d1, d_1 = self.D(real_data)
+        d2, d_2 = self.D(real_data)
+
+        # why max is needed when norm is positive?
+        consistency_term = (d1 - d2).norm(2, dim=1) + 0.1 * \
+            (d_1 - d_2).norm(2, dim=1) - self.M
+        return consistency_term.mean()
 
     def _gradient_penalty(self, real_data, generated_data):
         batch_size = real_data.size()[0]
@@ -84,7 +98,7 @@ class Trainer():
             interpolated = interpolated.cuda()
 
         # Calculate probability of interpolated examples
-        prob_interpolated = self.D(interpolated)
+        prob_interpolated = self.D(interpolated)[0]
 
         # Calculate gradients of probabilities with respect to examples
         gradients = torch_grad(outputs=prob_interpolated, inputs=interpolated,
@@ -116,6 +130,7 @@ class Trainer():
                 print("Iteration {}".format(i + 1))
                 print("D: {}".format(self.losses['D'][-1]))
                 print("GP: {}".format(self.losses['GP'][-1]))
+                print("CT: {}".format(self.losses['CT'][-1]))
                 print("Gradient norm: {}".format(self.losses['gradient_norm'][-1]))
                 if self.num_steps > self.critic_iterations:
                     print("G: {}".format(self.losses['G'][-1]))
@@ -156,3 +171,4 @@ class Trainer():
         generated_data = self.sample_generator(num_samples)
         # Remove color channel
         return generated_data.data.cpu().numpy()[:, 0, :, :]
+
